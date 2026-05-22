@@ -9,6 +9,7 @@ import java.time.LocalTime;
 public class Main {
     public static void main(String[] args) {
 
+        // Crea la libreria
         Libreria libreria = new Libreria(
                 "La Buona Lettura",
                 "Via Roma 1",
@@ -16,6 +17,7 @@ public class Main {
                 LocalTime.of(20, 0)
         );
 
+        // Crea i libri
         Cartaceo libro1 = new Cartaceo(
                 "Il Nome della Rosa", "Umberto Eco", "978-88-452-0000-1",
                 502, 1980, 15.99, "Romanzo", "Rigida"
