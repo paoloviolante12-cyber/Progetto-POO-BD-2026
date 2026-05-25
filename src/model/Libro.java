@@ -8,6 +8,7 @@ public class Libro {
     public int annoRilascio;
     public double prezzoArticolo;
     public String Categoria;
+    private boolean disponibile = true;
 
     public Libro(String nomeLibro, String nomeAutore, String ISBN, int numeroPagine, int annoRilascio, double prezzoArticolo, String categoria) {
         this.nomeLibro = nomeLibro;
@@ -45,5 +46,13 @@ public class Libro {
 
     public String getCategoria() {
         return Categoria;
+    }
+
+    public boolean isDisponibile() {
+        return disponibile;
+    }
+
+    public void setDisponibile(boolean disponibile) {
+        this.disponibile = disponibile;
     }
 }

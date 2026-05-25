@@ -1,5 +1,4 @@
 package model;
-import model.Libro;
 
 public class Cartaceo extends Libro{
 

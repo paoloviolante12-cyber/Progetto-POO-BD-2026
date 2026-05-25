@@ -1,5 +1,4 @@
 package model;
-import model.Libro;
 
 public class EBook extends Libro{
     public String formatoFile;

@@ -12,9 +12,7 @@ public class Prestito {
         this.inizioPrestito = inizioPrestito;
         this.finePrestito = finePrestito;
     }
-
     public String getRicevuta() { return ricevutaPrestito; }
-
     public boolean restituzione() {
         return LocalDate.now().isAfter(finePrestito);
     }

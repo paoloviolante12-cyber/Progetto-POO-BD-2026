@@ -5,6 +5,8 @@ import model.EBook;
 import model.Libro;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,29 +17,50 @@ public class HomeLibreria {
     private JLabel scrittaRisultati;
     private JLabel Account;
     private JButton loginButton;
+    private JButton logoutButton;
     public JPanel mainPanel;
+    private JComboBox Categoria;
+    private JLabel scrittaCategoria;
 
     private List<Libro> catalogo = new ArrayList<>();
     private List<Libro> risultatiCorrenti = new ArrayList<>();
     private Cliente clienteLoggato = null;
 
     public HomeLibreria() {
-        // Aggiunge margini interni al pannello principale
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Stato iniziale: ospite
         Account.setText("Ospite");
         loginButton.setVisible(true);
+        logoutButton.setVisible(false);
 
         loginButton.addActionListener(e -> {
             Login.apri(cliente -> {
                 clienteLoggato = cliente;
                 aggiornaStatoLogin();
+                logoutButton.setVisible(true);
             });
         });
 
-        cercaPulsante.addActionListener(e -> cercaLibri());
-        barraDiRicerca.addActionListener(e -> cercaLibri());
+        logoutButton.addActionListener(e -> {
+            clienteLoggato = null;
+            aggiornaStatoLogin();
+            logoutButton.setVisible(false);
+        });
+
+        // Un solo listener per il pulsante Cerca
+        cercaPulsante.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cercaLibri();
+            }
+        });
+
+        barraDiRicerca.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cercaLibri();
+            }
+        });
 
         risultatiList.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -70,35 +93,35 @@ public class HomeLibreria {
     }
 
     private void cercaLibri() {
+        String cat = (String) Categoria.getSelectedItem();
         String testo = barraDiRicerca.getText().trim().toLowerCase();
         risultatiCorrenti.clear();
-
-        if (testo.isEmpty()) {
-            scrittaRisultati.setText("Risultati:");
-            risultatiList.setListData(new String[0]);
-            return;
-        }
+        DefaultListModel<String> model = new DefaultListModel<>();
 
         for (Libro libro : catalogo) {
-            if (libro.getNomeLibro().toLowerCase().contains(testo) ||
-                    libro.getNomeAutore().toLowerCase().contains(testo) ||
-                    libro.getCategoria().toLowerCase().contains(testo)) {
+            // Se la categoria è vuota (primo elemento) mostra tutte
+            boolean matchCategoria = (cat == null || cat.isEmpty())
+                    || libro.getCategoria().equalsIgnoreCase(cat);
+
+            boolean matchTesto = testo.isEmpty()
+                    || libro.getNomeLibro().toLowerCase().contains(testo)
+                    || libro.getNomeAutore().toLowerCase().contains(testo);
+
+            if (matchCategoria && matchTesto) {
                 risultatiCorrenti.add(libro);
+                String tipo = (libro instanceof EBook) ? "[EBook] " : "[Cartaceo] ";
+                model.addElement(tipo + libro.getNomeLibro() + " - " +
+                        libro.getNomeAutore() + " | €" + libro.getPrezzoArticolo());
             }
         }
 
-        if (risultatiCorrenti.isEmpty()) {
+        risultatiList.setModel(model);
+
+        if (model.isEmpty()) {
             scrittaRisultati.setText("Risultati: nessun libro trovato");
-            risultatiList.setListData(new String[0]);
         } else {
-            scrittaRisultati.setText("Risultati: " + risultatiCorrenti.size() +
+            scrittaRisultati.setText("Risultati: " + model.size() +
                     " libro/i trovato/i  (doppio click per i dettagli)");
-            String[] nomi = risultatiCorrenti.stream()
-                    .map(l -> ((l instanceof EBook) ? "[EBook] " : "[Cartaceo] ") +
-                            l.getNomeLibro() + " - " + l.getNomeAutore() +
-                            " | €" + l.getPrezzoArticolo())
-                    .toArray(String[]::new);
-            risultatiList.setListData(nomi);
         }
     }
 }
