@@ -51,9 +51,11 @@ public class Login {
     }
 
     private void eseguiLogin(JTextField campoNome, JTextField campoCognome,
-                             JComboBox<String> tipoTessera, LoginListener listener) {
+                             JComboBox<String> tipoTessera,
+                             LoginListener listener) {
         String nome = campoNome.getText().trim();
         String cognome = campoCognome.getText().trim();
+
 
         if (nome.isEmpty() || cognome.isEmpty()) {
             JOptionPane.showMessageDialog(mainPanel,
@@ -63,11 +65,9 @@ public class Login {
 
         Cliente cliente = new Cliente(nome, cognome);
         String tipo = (String) tipoTessera.getSelectedItem();
-        cliente.setTessera(new Tessera("T-" + nome.toLowerCase(), tipo));
 
         if (listener != null) listener.onLogin(cliente);
 
-        // Chiude la finestra di login
         SwingUtilities.getWindowAncestor(mainPanel).dispose();
     }
 
