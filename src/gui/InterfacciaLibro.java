@@ -5,6 +5,7 @@ import model.Cliente;
 import model.EBook;
 import model.Libro;
 import model.Tessera;
+import controller.Prestito;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +15,7 @@ public class InterfacciaLibro {
     private JLabel nomeLibro;
     private JList<String> dettagliLibro;
     private JButton acquistaButton;
+    private JButton prestitoButton;
 
     public InterfacciaLibro(Libro libro, Cliente cliente) {
         mainPanel = new JPanel(new BorderLayout(10, 10));
@@ -74,7 +76,48 @@ public class InterfacciaLibro {
                     JOptionPane.INFORMATION_MESSAGE
             );
         });
-        mainPanel.add(acquistaButton, BorderLayout.SOUTH);
+
+        JPanel bottomPanel = new JPanel(new FlowLayout());
+        bottomPanel.add(acquistaButton);
+
+
+        prestitoButton = new JButton("Prestito");
+        prestitoButton.addActionListener(e -> {
+            if (libro instanceof EBook) {
+                JOptionPane.showMessageDialog(
+                        mainPanel,
+                        "Gli EBook non sono disponibili per il prestito.",
+                        "Prestito non disponibile",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+            if (libro.isDisponibile()) {
+                libro.setDisponibile(false);
+                Prestito prestito = new Prestito(
+                        "RIC-" + libro.getISBN(),
+                        java.time.LocalDate.now(),
+                        java.time.LocalDate.now().plusDays(30)
+                );
+                JOptionPane.showMessageDialog(
+                        mainPanel,
+                        String.format("Hai preso in prestito: %s\nRicevuta: %s\nScadenza restituzione: 30 giorni",
+                                libro.getNomeLibro(), prestito.getRicevuta()),
+                        "Prestito confermato",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            } else {
+                JOptionPane.showMessageDialog(
+                        mainPanel,
+                        String.format("Il libro \"%s\" non è attualmente disponibile.", libro.getNomeLibro()),
+                        "Non disponibile",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+        });
+        bottomPanel.add(prestitoButton);
+
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
 
     public static void apri(Libro libro, Cliente cliente) {

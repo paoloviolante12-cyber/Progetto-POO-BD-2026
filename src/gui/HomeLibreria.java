@@ -5,6 +5,7 @@ import model.EBook;
 import model.Libro;
 
 import javax.swing.*;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,28 +17,26 @@ public class HomeLibreria {
     private JLabel Account;
     private JButton loginButton;
     public JPanel mainPanel;
+    private JComboBox Categoria;
+    private JLabel scrittaCategoria;
 
     private List<Libro> catalogo = new ArrayList<>();
     private List<Libro> risultatiCorrenti = new ArrayList<>();
     private Cliente clienteLoggato = null;
 
     public HomeLibreria() {
-        // Aggiunge margini interni al pannello principale
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Stato iniziale: ospite
         Account.setText("Ospite");
-        loginButton.setVisible(true);
-
-        loginButton.addActionListener(e -> {
-            Login.apri(cliente -> {
-                clienteLoggato = cliente;
-                aggiornaStatoLogin();
-            });
-        });
+        aggiornaStatoLogin();
 
         cercaPulsante.addActionListener(e -> cercaLibri());
         barraDiRicerca.addActionListener(e -> cercaLibri());
+        Categoria.addItemListener(e -> {
+            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+                cercaLibri();
+            }
+        });
 
         risultatiList.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -52,53 +51,73 @@ public class HomeLibreria {
     }
 
     private void aggiornaStatoLogin() {
+        // Rimuove listener precedenti per evitare duplicati
+        for (ActionListener al : loginButton.getActionListeners()) {
+            loginButton.removeActionListener(al);
+        }
+
         if (clienteLoggato != null) {
             String tessera = (clienteLoggato.getTessera() != null)
                     ? " [" + clienteLoggato.getTessera().getTipo() + "]"
                     : "";
             Account.setText(clienteLoggato.getNomeCliente() +
                     " " + clienteLoggato.getCognomeCliente() + tessera);
-            loginButton.setVisible(false);
+            loginButton.setText("Logout");
+            loginButton.addActionListener(e -> {
+                clienteLoggato = null;
+                aggiornaStatoLogin();
+            });
         } else {
             Account.setText("Ospite");
-            loginButton.setVisible(true);
+            loginButton.setText("Login");
+            loginButton.addActionListener(e -> {
+                Login.apri(cliente -> {
+                    clienteLoggato = cliente;
+                    aggiornaStatoLogin();
+                });
+            });
         }
     }
 
     public void aggiungiLibro(Libro libro) {
         catalogo.add(libro);
+        cercaLibri();
     }
 
     private void cercaLibri() {
+        String cat = (String) Categoria.getSelectedItem();
         String testo = barraDiRicerca.getText().trim().toLowerCase();
         risultatiCorrenti.clear();
+        DefaultListModel<String> model = new DefaultListModel<>();
 
-        if (testo.isEmpty()) {
-            scrittaRisultati.setText("Risultati:");
-            risultatiList.setListData(new String[0]);
-            return;
-        }
+        boolean filtrando = (cat != null && !cat.isEmpty()) || !testo.isEmpty();
 
         for (Libro libro : catalogo) {
-            if (libro.getNomeLibro().toLowerCase().contains(testo) ||
-                    libro.getNomeAutore().toLowerCase().contains(testo) ||
-                    libro.getCategoria().toLowerCase().contains(testo)) {
+            boolean matchCategoria = (cat == null || cat.isEmpty())
+                    || libro.getCategoria().equalsIgnoreCase(cat);
+
+            boolean matchTesto = testo.isEmpty()
+                    || libro.getNomeLibro().toLowerCase().contains(testo)
+                    || libro.getNomeAutore().toLowerCase().contains(testo);
+
+            if (matchCategoria && matchTesto) {
                 risultatiCorrenti.add(libro);
+                String tipo = (libro instanceof EBook) ? "[EBook] " : "[Cartaceo] ";
+                String disp = libro.isDisponibile() ? "" : " [Non disponibile]";
+                model.addElement(tipo + libro.getNomeLibro() + " - " +
+                        libro.getNomeAutore() + " | €" + libro.getPrezzoArticolo() + disp);
             }
         }
 
-        if (risultatiCorrenti.isEmpty()) {
+        risultatiList.setModel(model);
+
+        if (!filtrando) {
+            scrittaRisultati.setText("Catalogo completo: " + model.size() + " libri  (doppio click per i dettagli)");
+        } else if (model.isEmpty()) {
             scrittaRisultati.setText("Risultati: nessun libro trovato");
-            risultatiList.setListData(new String[0]);
         } else {
-            scrittaRisultati.setText("Risultati: " + risultatiCorrenti.size() +
+            scrittaRisultati.setText("Risultati: " + model.size() +
                     " libro/i trovato/i  (doppio click per i dettagli)");
-            String[] nomi = risultatiCorrenti.stream()
-                    .map(l -> ((l instanceof EBook) ? "[EBook] " : "[Cartaceo] ") +
-                            l.getNomeLibro() + " - " + l.getNomeAutore() +
-                            " | €" + l.getPrezzoArticolo())
-                    .toArray(String[]::new);
-            risultatiList.setListData(nomi);
         }
     }
 }
