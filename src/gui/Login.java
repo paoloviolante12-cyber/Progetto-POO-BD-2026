@@ -65,6 +65,7 @@ public class Login {
 
         Cliente cliente = new Cliente(nome, cognome);
         String tipo = (String) tipoTessera.getSelectedItem();
+        cliente.setTessera(new Tessera(tipo, tipo));
 
         if (listener != null) listener.onLogin(cliente);
 
