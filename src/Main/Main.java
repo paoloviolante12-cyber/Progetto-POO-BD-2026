@@ -14,7 +14,7 @@ public class Main {
     public static void main(String[] args) {
 
         Libreria libreria = new Libreria(
-                "La Buona Lettura",
+                "Better Read Books",
                 "Via Roma 1",
                 LocalTime.of(9, 0),
                 LocalTime.of(20, 0)
