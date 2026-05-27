@@ -6,6 +6,7 @@ import model.EBook;
 import model.Libro;
 import model.Tessera;
 import controller.Prestito;
+import exception.LibroNonDisponibileException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,31 +57,54 @@ public class InterfacciaLibro {
                 extra,
                 "Pagine:      " + libro.getNumeroPagine(),
                 "Anno:        " + libro.getAnnoRilascio(),
-                rigaPrezzo
+                rigaPrezzo,
+                "Disponibile: " + (libro.isDisponibile() ? "Sì" : "No")
         };
 
         dettagliLibro = new JList<>(dettagli);
         dettagliLibro.setEnabled(false);
         mainPanel.add(new JScrollPane(dettagliLibro), BorderLayout.CENTER);
 
-        // Pulsante acquista
+        // ========== BOTTONE ACQUISTA con try-catch ==========
         acquistaButton = new JButton("Acquista");
         acquistaButton.addActionListener(e -> {
-            double prezzoFinale = (tessera != null && tessera.isValida())
-                    ? tessera.applicaSconto(prezzoOriginale)
-                    : prezzoOriginale;
-            JOptionPane.showMessageDialog(
-                    mainPanel,
-                    String.format("Hai acquistato: %s\nTotale: €%.2f", libro.getNomeLibro(), prezzoFinale),
-                    "Acquisto completato",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+
+            try {
+                // Verifica se il libro è disponibile — se no, lancia l'eccezione
+                libro.verificaDisponibilita();
+
+                // Se arriviamo qui, il libro è disponibile
+                libro.setDisponibile(false);
+
+                double prezzoFinale = (tessera != null && tessera.isValida())
+                        ? tessera.applicaSconto(prezzoOriginale)
+                        : prezzoOriginale;
+
+                JOptionPane.showMessageDialog(
+                        mainPanel,
+                        String.format("Hai acquistato: %s\nTotale: €%.2f",
+                                libro.getNomeLibro(), prezzoFinale),
+                        "Acquisto completato",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+                aggiornaDettagli(libro, tessera, prezzoOriginale, tipo, extra);
+
+            } catch (LibroNonDisponibileException ex) {
+                // L'eccezione viene catturata qui
+                JOptionPane.showMessageDialog(
+                        mainPanel,
+                        ex.getMessage(),
+                        "Errore - Libro Non Disponibile",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
         });
 
         JPanel bottomPanel = new JPanel(new FlowLayout());
         bottomPanel.add(acquistaButton);
 
-
+        // ========== BOTTONE PRESTITO con try-catch ==========
         prestitoButton = new JButton("Prestito");
         prestitoButton.addActionListener(e -> {
             if (libro instanceof EBook) {
@@ -92,32 +116,70 @@ public class InterfacciaLibro {
                 );
                 return;
             }
-            if (libro.isDisponibile()) {
+
+            try {
+                // Verifica se il libro è disponibile — se no, lancia l'eccezione
+                libro.verificaDisponibilita();
+
+                // Se arriviamo qui, il libro è disponibile
                 libro.setDisponibile(false);
+
                 Prestito prestito = new Prestito(
                         "RIC-" + libro.getISBN(),
                         java.time.LocalDate.now(),
                         java.time.LocalDate.now().plusDays(30)
                 );
+
                 JOptionPane.showMessageDialog(
                         mainPanel,
-                        String.format("Hai preso in prestito: %s\nRicevuta: %s\nScadenza restituzione: 30 giorni",
+                        String.format("Hai preso in prestito: %s\nRicevuta: %s\nScadenza: 30 giorni",
                                 libro.getNomeLibro(), prestito.getRicevuta()),
                         "Prestito confermato",
                         JOptionPane.INFORMATION_MESSAGE
                 );
-            } else {
+
+                aggiornaDettagli(libro, tessera, prezzoOriginale, tipo, extra);
+
+            } catch (LibroNonDisponibileException ex) {
+                // L'eccezione viene catturata qui
                 JOptionPane.showMessageDialog(
                         mainPanel,
-                        String.format("Il libro \"%s\" non è attualmente disponibile.", libro.getNomeLibro()),
-                        "Non disponibile",
-                        JOptionPane.WARNING_MESSAGE
+                        ex.getMessage(),
+                        "Errore - Libro Non Disponibile",
+                        JOptionPane.ERROR_MESSAGE
                 );
             }
         });
         bottomPanel.add(prestitoButton);
 
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    // Aggiorna la JList dei dettagli dopo un acquisto/prestito
+    private void aggiornaDettagli(Libro libro, Tessera tessera,
+                                  double prezzoOriginale, String tipo, String extra) {
+        String rigaPrezzo;
+        if (tessera != null && tessera.isValida()) {
+            double prezzoScontato = tessera.applicaSconto(prezzoOriginale);
+            rigaPrezzo = String.format("Prezzo:      €%.2f  →  €%.2f (%s: -%d%%)",
+                    prezzoOriginale, prezzoScontato,
+                    tessera.getTipo(), (int)(tessera.getSconto() * 100));
+        } else {
+            rigaPrezzo = String.format("Prezzo:      €%.2f", prezzoOriginale);
+        }
+
+        String[] dettagliAggiornati = {
+                "Autore:      " + libro.getNomeAutore(),
+                "ISBN:        " + libro.getISBN(),
+                "Categoria:   " + libro.getCategoria(),
+                "Tipo:        " + tipo,
+                extra,
+                "Pagine:      " + libro.getNumeroPagine(),
+                "Anno:        " + libro.getAnnoRilascio(),
+                rigaPrezzo,
+                "Disponibile: " + (libro.isDisponibile() ? "Sì" : "No")
+        };
+        dettagliLibro.setListData(dettagliAggiornati);
     }
 
     public static void apri(Libro libro, Cliente cliente) {

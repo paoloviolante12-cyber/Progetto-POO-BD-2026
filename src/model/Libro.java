@@ -1,5 +1,7 @@
 package model;
 
+import exception.LibroNonDisponibileException;
+
 public class Libro {
     public String nomeLibro;
     public String nomeAutore;
@@ -10,7 +12,8 @@ public class Libro {
     public String Categoria;
     private boolean disponibile = true;
 
-    public Libro(String nomeLibro, String nomeAutore, String ISBN, int numeroPagine, int annoRilascio, double prezzoArticolo, String categoria) {
+    public Libro(String nomeLibro, String nomeAutore, String ISBN, int numeroPagine,
+                 int annoRilascio, double prezzoArticolo, String categoria) {
         this.nomeLibro = nomeLibro;
         this.nomeAutore = nomeAutore;
         this.ISBN = ISBN;
@@ -20,39 +23,21 @@ public class Libro {
         Categoria = categoria;
     }
 
-    public String getNomeLibro() {
-        return nomeLibro;
+    // Lancia l'eccezione se il libro non è disponibile
+    public void verificaDisponibilita() throws LibroNonDisponibileException {
+        if (!disponibile) {
+            throw new LibroNonDisponibileException(nomeLibro);
+        }
     }
 
-    public String getNomeAutore() {
-        return nomeAutore;
-    }
+    public String getNomeLibro() { return nomeLibro; }
+    public String getNomeAutore() { return nomeAutore; }
+    public String getISBN() { return ISBN; }
+    public int getNumeroPagine() { return numeroPagine; }
+    public int getAnnoRilascio() { return annoRilascio; }
+    public double getPrezzoArticolo() { return prezzoArticolo; }
+    public String getCategoria() { return Categoria; }
 
-    public String getISBN() {
-        return ISBN;
-    }
-
-    public int getNumeroPagine() {
-        return numeroPagine;
-    }
-
-    public int getAnnoRilascio() {
-        return annoRilascio;
-    }
-
-    public double getPrezzoArticolo() {
-        return prezzoArticolo;
-    }
-
-    public String getCategoria() {
-        return Categoria;
-    }
-
-    public boolean isDisponibile() {
-        return disponibile;
-    }
-
-    public void setDisponibile(boolean disponibile) {
-        this.disponibile = disponibile;
-    }
+    public boolean isDisponibile() { return disponibile; }
+    public void setDisponibile(boolean disponibile) { this.disponibile = disponibile; }
 }

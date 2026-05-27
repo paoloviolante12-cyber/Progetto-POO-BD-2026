@@ -5,6 +5,7 @@ import model.EBook;
 import model.Libro;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +26,40 @@ public class HomeLibreria {
     private Cliente clienteLoggato = null;
 
     public HomeLibreria() {
+        // Ricostruisce il layout da codice per avere la scrollbar funzionante
+        mainPanel.removeAll();
+        mainPanel.setLayout(new BorderLayout(5, 5));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
+        // === RIGA IN ALTO: barra di ricerca + categoria + bottone cerca ===
+        JPanel topPanel = new JPanel(new BorderLayout(5, 0));
+        topPanel.add(barraDiRicerca, BorderLayout.CENTER);
+
+        JPanel categoriaPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        categoriaPanel.add(scrittaCategoria);
+        categoriaPanel.add(Categoria);
+        categoriaPanel.add(cercaPulsante);
+        topPanel.add(categoriaPanel, BorderLayout.EAST);
+
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+
+        // === CENTRO: label risultati + lista con scrollbar ===
+        JPanel centerPanel = new JPanel(new BorderLayout(0, 5));
+        centerPanel.add(scrittaRisultati, BorderLayout.NORTH);
+
+        JScrollPane scrollPane = new JScrollPane(risultatiList);
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
+
+        // === RIGA IN BASSO: account + bottone login ===
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(Account, BorderLayout.WEST);
+        bottomPanel.add(loginButton, BorderLayout.EAST);
+
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // === LISTENER ===
         Account.setText("Ospite");
         aggiornaStatoLogin();
 
@@ -51,7 +84,6 @@ public class HomeLibreria {
     }
 
     private void aggiornaStatoLogin() {
-        // Rimuove listener precedenti per evitare duplicati
         for (ActionListener al : loginButton.getActionListeners()) {
             loginButton.removeActionListener(al);
         }
