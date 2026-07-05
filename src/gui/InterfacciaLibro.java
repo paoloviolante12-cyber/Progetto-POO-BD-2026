@@ -5,11 +5,13 @@ import model.Cliente;
 import model.EBook;
 import model.Libro;
 import model.Tessera;
+import controller.Acquisto;
 import controller.Prestito;
 import exception.LibroNonDisponibileException;
 
 import javax.swing.*;
 import java.awt.*;
+import java.sql.SQLException;
 
 public class InterfacciaLibro {
     public JPanel mainPanel;
@@ -65,25 +67,15 @@ public class InterfacciaLibro {
         dettagliLibro.setEnabled(false);
         mainPanel.add(new JScrollPane(dettagliLibro), BorderLayout.CENTER);
 
-        // ========== BOTTONE ACQUISTA con try-catch ==========
+        // BOTTONE ACQUISTA con try-catch
         acquistaButton = new JButton("Acquista");
         acquistaButton.addActionListener(e -> {
 
             try {
-                // Verifica se il libro è disponibile — se no, lancia l'eccezione
-                libro.verificaDisponibilita();
-
-                // Se arriviamo qui, il libro è disponibile
-                libro.setDisponibile(false);
-
-                double prezzoFinale = (tessera != null && tessera.isValida())
-                        ? tessera.applicaSconto(prezzoOriginale)
-                        : prezzoOriginale;
-
+                Acquisto acquisto = Acquisto.eseguiAcquisto(libro, cliente, "Carta");
                 JOptionPane.showMessageDialog(
                         mainPanel,
-                        String.format("Hai acquistato: %s\nTotale: €%.2f",
-                                libro.getNomeLibro(), prezzoFinale),
+                        "Hai acquistato: " + libro.getNomeLibro() + "\n" + acquisto.getScontrino(),
                         "Acquisto completato",
                         JOptionPane.INFORMATION_MESSAGE
                 );
@@ -91,11 +83,19 @@ public class InterfacciaLibro {
                 aggiornaDettagli(libro, tessera, prezzoOriginale, tipo, extra);
 
             } catch (LibroNonDisponibileException ex) {
-                // L'eccezione viene catturata qui
+                // Libro non disponibile
                 JOptionPane.showMessageDialog(
                         mainPanel,
                         ex.getMessage(),
                         "Errore - Libro Non Disponibile",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            } catch (SQLException ex) {
+                // Errore nel salvataggio su database
+                JOptionPane.showMessageDialog(
+                        mainPanel,
+                        "Errore nel salvataggio dell'acquisto sul database:\n" + ex.getMessage(),
+                        "Errore Database",
                         JOptionPane.ERROR_MESSAGE
                 );
             }
@@ -104,7 +104,7 @@ public class InterfacciaLibro {
         JPanel bottomPanel = new JPanel(new FlowLayout());
         bottomPanel.add(acquistaButton);
 
-        // ========== BOTTONE PRESTITO con try-catch ==========
+        // BOTTONE PRESTITO con try-catch
         prestitoButton = new JButton("Prestito");
         prestitoButton.addActionListener(e -> {
             if (libro instanceof EBook) {
@@ -118,17 +118,8 @@ public class InterfacciaLibro {
             }
 
             try {
-                // Verifica se il libro è disponibile — se no, lancia l'eccezione
-                libro.verificaDisponibilita();
 
-                // Se arriviamo qui, il libro è disponibile
-                libro.setDisponibile(false);
-
-                Prestito prestito = new Prestito(
-                        "RIC-" + libro.getISBN(),
-                        java.time.LocalDate.now(),
-                        java.time.LocalDate.now().plusDays(30)
-                );
+                Prestito prestito = Prestito.eseguiPrestito(libro);
 
                 JOptionPane.showMessageDialog(
                         mainPanel,
@@ -141,11 +132,17 @@ public class InterfacciaLibro {
                 aggiornaDettagli(libro, tessera, prezzoOriginale, tipo, extra);
 
             } catch (LibroNonDisponibileException ex) {
-                // L'eccezione viene catturata qui
                 JOptionPane.showMessageDialog(
                         mainPanel,
                         ex.getMessage(),
                         "Errore - Libro Non Disponibile",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(
+                        mainPanel,
+                        "Errore: \n" + ex.getMessage(),
+                        "Errore Database",
                         JOptionPane.ERROR_MESSAGE
                 );
             }

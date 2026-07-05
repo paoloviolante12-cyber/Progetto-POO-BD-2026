@@ -3,10 +3,12 @@ package gui;
 import model.Cliente;
 import model.EBook;
 import model.Libro;
+import dao.LibroDAO;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class HomeLibreria {
         mainPanel.setLayout(new BorderLayout(5, 5));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // === RIGA IN ALTO: barra di ricerca + categoria + bottone cerca ===
+        // RIGA IN ALTO: barra di ricerca + categoria + bottone cerca
         JPanel topPanel = new JPanel(new BorderLayout(5, 0));
         topPanel.add(barraDiRicerca, BorderLayout.CENTER);
 
@@ -43,7 +45,7 @@ public class HomeLibreria {
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
-        // === CENTRO: label risultati + lista con scrollbar ===
+        // CENTRO: label risultati + lista con scrollbar
         JPanel centerPanel = new JPanel(new BorderLayout(0, 5));
         centerPanel.add(scrittaRisultati, BorderLayout.NORTH);
 
@@ -52,14 +54,17 @@ public class HomeLibreria {
 
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
-        // === RIGA IN BASSO: account + bottone login ===
+        // RIGA IN BASSO: account + bottone login
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(Account, BorderLayout.WEST);
         bottomPanel.add(loginButton, BorderLayout.EAST);
 
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        // === LISTENER ===
+        // CARICAMENTO CATALOGO DAL DATABASE
+        caricaCatalogoDaDB();
+
+        // LISTENER
         Account.setText("Ospite");
         aggiornaStatoLogin();
 
@@ -113,6 +118,22 @@ public class HomeLibreria {
 
     public void aggiungiLibro(Libro libro) {
         catalogo.add(libro);
+        cercaLibri();
+    }
+
+
+    private void caricaCatalogoDaDB() {
+        try {
+            catalogo = new LibroDAO().caricaCatalogo();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                    mainPanel,
+                    "Errore: \n" + ex.getMessage(),
+                    "Errore Database",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            catalogo = new ArrayList<>();
+        }
         cercaLibri();
     }
 
